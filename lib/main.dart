@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_quiz_application/screens/menu_screen.dart';
+import 'package:flutter_quiz_application/screens/home_screen.dart';
 
 void main() {
   runApp(Application());
@@ -13,7 +13,7 @@ class Application extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'dana'),
-      home: MenuScreen(),
+      home: HomeScreen(),
     );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quiz_application/constants/Constants.dart';
-import 'package:flutter_quiz_application/screens/menu_screen.dart';
 import 'package:flutter_quiz_application/screens/quiz_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -18,21 +17,7 @@ class HomeScreen extends StatelessWidget {
               alignment: Alignment.topLeft,
               child: Padding(
                 padding: const EdgeInsets.all(18.0),
-                child: InkWell(
-                  child: Icon(
-                    Icons.cancel_outlined,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MenuScreen(),
-                      ),
-                    );
-                  },
-                ),
+                child: SizedBox(width: 30,height: 30,),
               ),
             ),
             SizedBox(
@@ -47,26 +32,14 @@ class HomeScreen extends StatelessWidget {
             SizedBox(
               height: 50,
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 30),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Container(
-                  child: Text(
-                    'سطح 1',
-                    textAlign: TextAlign.end,
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
+
             Padding(
               padding: const EdgeInsets.only(right: 30, bottom: 10),
               child: Align(
                 alignment: Alignment.topRight,
                 child: Container(
                   child: Text(
-                    'هوا فضا',
+                    "阿里云",
                     textAlign: TextAlign.end,
                     style: TextStyle(
                       color: Colors.white,
@@ -83,7 +56,7 @@ class HomeScreen extends StatelessWidget {
                 alignment: Alignment.topRight,
                 child: Container(
                   child: Text(
-                    'آیا خودت رو با سوالات هوا فضا تست کردی ؟کلا به این موضوع علاقه داری ؟',
+                    "阿里云ACA云计算助理工程师",
                     textAlign: TextAlign.end,
                     style: TextStyle(
                       color: Colors.white,
@@ -97,7 +70,7 @@ class HomeScreen extends StatelessWidget {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                primary: Colors.white,
+                backgroundColor: Colors.white,
                 minimumSize: Size(300, 40.0),
                 elevation: 35,
                 shape: RoundedRectangleBorder(
@@ -113,7 +86,7 @@ class HomeScreen extends StatelessWidget {
                 );
               },
               child: Text(
-                'شروع بازی',
+                '开始练习',
                 style: TextStyle(
                   color: welcomeMainBackground,
                   fontWeight: FontWeight.bold,

@@ -14,6 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   hexcolor: ^3.0.1
   flutter_ringtone_player: ^3.2.0
+  shared_preferences: ^2.2.2
 
 
 
@@ -30,6 +31,7 @@ flutter:
 
   assets:
     - images/
+    - lib/constants/
   #   - images/a_dot_ham.jpeg
 
 
