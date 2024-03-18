@@ -137,7 +137,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 height: 30,
               ),
               ...List.generate(
-                4,
+                _getOptionsItem(showenQuestionIndex).length,
                 (index) => getOptionsItem(showenQuestionIndex, index),
               ),
               SizedBox(
@@ -154,7 +154,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         color: Colors.white,
                         child: Center(
                           child: Text(
-                            "正确答案：${questions[showenQuestionIndex].answer}\n解析：${questions[showenQuestionIndex].analysis ?? "无"}"
+                            "正确答案：${questions[showenQuestionIndex].answer}\n解析：${(questions[showenQuestionIndex].analysis ?? "\n\n") == "\n\n" ? "暂无解析" : questions[showenQuestionIndex].analysis ?? ""}"
                                 .replaceAll("\n\n", ""),
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -285,7 +285,7 @@ class _QuizScreenState extends State<QuizScreen> {
           color: Colors.white,
           child: Center(
             child: Text(
-              "${_getOptionsItem(page)[index].name} ${_getOptionsItem(page)[index].item}",
+              "${_getOptionsItem(page)[index].name}.${_getOptionsItem(page)[index].item}",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: welcomeMainBackground,
