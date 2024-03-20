@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quiz_application/Models/aca_option.dart';
 import 'package:flutter_quiz_application/Models/aca_question.dart';
 import 'package:flutter_quiz_application/constants/Constants.dart';
+import 'package:flutter_quiz_application/global/Manager.dart';
 import 'package:flutter_quiz_application/screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,24 +17,17 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  int showenQuestionIndex = 0;
-
   AcaQuestion? selectedQuestion;
 
   bool endButton = false;
   bool showAnswer = false;
   int correctAnswer = 0;
-
+  Mode mode = Manager.getInstance().mode;
   List<AcaQuestion> questions = [];
 
   @override
   void initState() {
     super.initState();
-    SharedPreferences.getInstance().then((prefs) {
-      setState(() {
-        showenQuestionIndex = prefs.getInt("index") ?? 0;
-      });
-    });
   }
 
   @override
@@ -43,6 +37,38 @@ class _QuizScreenState extends State<QuizScreen> {
         List<dynamic> jsonData = json.decode(data);
         List<AcaQuestion> questions =
             jsonData.map((json) => AcaQuestion.fromJson(json)).toList();
+        switch (mode) {
+          case Mode.favorite:
+            questions = questions
+                .where((element) =>
+                    Manager.getInstance().questionIds.contains(element.index))
+                .toList();
+            if (questions.isEmpty) {
+              Navigator.pop(context);
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text("提示"),
+                      content: Text("现在没有任何收藏的题目"),
+                      actions: [
+                        TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text("确定"))
+                      ],
+                    );
+                  });
+            }
+            break;
+          default:
+            break;
+        }
+        if (Manager.getInstance().isRamdom) {
+          questions.shuffle();
+        }
+
         setState(() {
           this.questions = questions;
         });
@@ -53,10 +79,13 @@ class _QuizScreenState extends State<QuizScreen> {
         ),
       );
     }
-    selectedQuestion = questions[showenQuestionIndex];
+    selectedQuestion = questions[Manager.getInstance().currentIndex];
 
-    String getQuestiosNumber = '${showenQuestionIndex + 1}/${questions.length}';
-
+    String getQuestiosNumber =
+        '${Manager.getInstance().currentIndex + 1}/${questions.length}';
+    bool isFavorite = Manager.getInstance()
+        .questionIds
+        .contains(questions[Manager.getInstance().currentIndex].index);
     return Scaffold(
       backgroundColor: welcomeMainBackground,
       body: SafeArea(
@@ -68,7 +97,7 @@ class _QuizScreenState extends State<QuizScreen> {
               Align(
                 alignment: Alignment.topLeft,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 18, top: 18),
+                  padding: const EdgeInsets.only(left: 18, top: 18, right: 18),
                   child: Row(
                     children: [
                       InkWell(
@@ -78,6 +107,8 @@ class _QuizScreenState extends State<QuizScreen> {
                           size: 30,
                         ),
                         onTap: () {
+                          if (Manager.getInstance().isRamdom)
+                            Manager.getInstance().currentIndex = 0;
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -91,16 +122,70 @@ class _QuizScreenState extends State<QuizScreen> {
                           padding: EdgeInsets.only(right: 20),
                           child: GestureDetector(
                             onTap: () {
-                              setState(() {
-                                showenQuestionIndex = 0;
-                                SharedPreferences.getInstance().then((prefs) {
-                                  prefs.setInt("index", showenQuestionIndex);
-                                });
-                              });
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    // 输入跳转的题
+                                    TextEditingController _controller =
+                                        TextEditingController();
+                                    return AlertDialog(
+                                      title: Text("跳转"),
+                                      content: TextField(
+                                        controller: _controller,
+                                        decoration: InputDecoration(
+                                          labelText: "请输入题号",
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () {
+                                              int index =
+                                                  int.parse(_controller.text);
+                                              if (index > questions.length ||
+                                                  index < 1) {
+                                                Navigator.pop(context);
+                                                showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      return AlertDialog(
+                                                        title: Text("提示"),
+                                                        content:
+                                                            Text("题号不在范围内"),
+                                                        actions: [
+                                                          TextButton(
+                                                              onPressed: () {
+                                                                Navigator.pop(
+                                                                    context);
+                                                              },
+                                                              child: Text("确定"))
+                                                        ],
+                                                      );
+                                                    });
+                                                return;
+                                              }
+                                              Manager.getInstance()
+                                                  .currentIndex = index-1;
+                                              SharedPreferences.getInstance().then((prefs) {
+                                                setState(() {
+                                                  prefs.setInt("index",
+                                                      Manager.getInstance().currentIndex);
+                                                });
+                                              });
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text("确定")),
+                                        TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text("取消")),
+                                      ],
+                                    );
+                                  });
                             },
                             child: Text(
                               getQuestiosNumber,
-                              textAlign: TextAlign.end,
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white.withOpacity(0.4),
@@ -108,7 +193,40 @@ class _QuizScreenState extends State<QuizScreen> {
                             ),
                           ),
                         ),
-                      )
+                      ),
+                      InkWell(
+                        child: Icon(
+                          isFavorite ? Icons.star : Icons.star_border_outlined,
+                          color: isFavorite ? Colors.yellow : Colors.white,
+                          size: 30,
+                        ),
+                        onTap: () {
+                          var quesionList = Manager.getInstance().questionIds;
+                          var currentQuestionIndex =
+                              questions[Manager.getInstance().currentIndex]
+                                  .index;
+                          setState(() {
+                            if (quesionList.contains(currentQuestionIndex)) {
+                              isFavorite = false;
+                              Manager.getInstance().questionIds =
+                                  Manager.getInstance()
+                                      .questionIds
+                                      .where((element) {
+                                return element !=
+                                    questions[
+                                            Manager.getInstance().currentIndex]
+                                        .index;
+                              }).toList();
+                            } else {
+                              isFavorite = true;
+                              Manager.getInstance().questionIds.add(
+                                  questions[Manager.getInstance().currentIndex]
+                                          .index ??
+                                      0);
+                            }
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -137,8 +255,9 @@ class _QuizScreenState extends State<QuizScreen> {
                 height: 30,
               ),
               ...List.generate(
-                _getOptionsItem(showenQuestionIndex).length,
-                (index) => getOptionsItem(showenQuestionIndex, index),
+                _getOptionsItem(Manager.getInstance().currentIndex).length,
+                (index) =>
+                    getOptionsItem(Manager.getInstance().currentIndex, index),
               ),
               SizedBox(
                 height: 30,
@@ -154,7 +273,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         color: Colors.white,
                         child: Center(
                           child: Text(
-                            "正确答案：${questions[showenQuestionIndex].answer}\n解析：${(questions[showenQuestionIndex].analysis ?? "\n\n") == "\n\n" ? "暂无解析" : questions[showenQuestionIndex].analysis ?? ""}"
+                            "正确答案：${questions[Manager.getInstance().currentIndex].answer}\n解析：${(questions[Manager.getInstance().currentIndex].analysis ?? "\n\n") == "\n\n" ? "暂无解析" : questions[Manager.getInstance().currentIndex].analysis ?? ""}"
                                 .replaceAll("\n\n", ""),
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -177,7 +296,8 @@ class _QuizScreenState extends State<QuizScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              (showenQuestionIndex >= questions.length - 1)
+                              (Manager.getInstance().currentIndex >=
+                                      questions.length - 1)
                                   ? mainButtonBackground
                                   : nextButtonBackground,
                           minimumSize: Size(120, 40.0),
@@ -187,15 +307,17 @@ class _QuizScreenState extends State<QuizScreen> {
                           ),
                         ),
                         onPressed: () {
-                          if (showenQuestionIndex == 0) {
+                          if (Manager.getInstance().currentIndex == 0) {
                             return;
                           }
-                          if (showenQuestionIndex < questions.length - 1) {
+                          if (Manager.getInstance().currentIndex <
+                              questions.length - 1) {
                             setState(() {
-                              showenQuestionIndex--;
+                              Manager.getInstance().currentIndex--;
                               SharedPreferences.getInstance().then((prefs) {
                                 setState(() {
-                                  prefs.setInt("index", showenQuestionIndex);
+                                  prefs.setInt("index",
+                                      Manager.getInstance().currentIndex);
                                 });
                               });
                               showAnswer = false;
@@ -218,7 +340,8 @@ class _QuizScreenState extends State<QuizScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              (showenQuestionIndex >= questions.length - 1)
+                              (Manager.getInstance().currentIndex >=
+                                      questions.length - 1)
                                   ? mainButtonBackground
                                   : nextButtonBackground,
                           minimumSize: Size(120, 40.0),
@@ -228,12 +351,14 @@ class _QuizScreenState extends State<QuizScreen> {
                           ),
                         ),
                         onPressed: () {
-                          if (showenQuestionIndex < questions.length - 1) {
+                          if (Manager.getInstance().currentIndex <
+                              questions.length - 1) {
                             setState(() {
-                              showenQuestionIndex++;
+                              Manager.getInstance().currentIndex++;
                               SharedPreferences.getInstance().then((prefs) {
                                 setState(() {
-                                  prefs.setInt("index", showenQuestionIndex);
+                                  prefs.setInt("index",
+                                      Manager.getInstance().currentIndex);
                                 });
                               });
                               showAnswer = false;
@@ -242,13 +367,15 @@ class _QuizScreenState extends State<QuizScreen> {
 
                             return;
                           }
-                          if (showenQuestionIndex >= questions.length - 1) {
+                          if (Manager.getInstance().currentIndex >=
+                              questions.length - 1) {
                             return;
                           }
                         },
                         child: Text(
-                          (showenQuestionIndex >= questions.length - 1)
-                              ? "结束"
+                          (Manager.getInstance().currentIndex >=
+                                  questions.length - 1)
+                              ? "没有了"
                               : "下一题",
                           style: TextStyle(
                             color: Colors.white,
