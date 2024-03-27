@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum Mode { normol, favorite }
 
@@ -8,7 +9,7 @@ class Manager {
   bool _isRamdom = false; // 是否乱序
   int _currentIndex = 0; // 当前题目序号
   int _currentRandomIndex = 0;
-  int _currentFavoriteIndex= 0;
+  int _currentFavoriteIndex = 0;
   late Mode _mode;
 
   Manager._() {
@@ -29,14 +30,14 @@ class Manager {
   }
 
   int get currentIndex {
-    if (mode == Mode.favorite){
+    if (mode == Mode.favorite) {
       return _currentFavoriteIndex;
     }
     return _isRamdom ? _currentRandomIndex : _currentIndex;
   }
 
   set currentIndex(int currentIndex) {
-    if (mode == Mode.favorite){
+    if (mode == Mode.favorite) {
       _currentFavoriteIndex = currentIndex;
       return;
     }
@@ -76,5 +77,9 @@ class Manager {
       _isRamdom = false;
       _currentIndex = prefs.getInt('index') ?? 0;
     });
+  }
+
+  Future<void> launchUrl(String s) async {
+    await launch(s);
   }
 }

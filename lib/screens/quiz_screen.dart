@@ -164,11 +164,14 @@ class _QuizScreenState extends State<QuizScreen> {
                                                 return;
                                               }
                                               Manager.getInstance()
-                                                  .currentIndex = index-1;
-                                              SharedPreferences.getInstance().then((prefs) {
+                                                  .currentIndex = index - 1;
+                                              SharedPreferences.getInstance()
+                                                  .then((prefs) {
                                                 setState(() {
-                                                  prefs.setInt("index",
-                                                      Manager.getInstance().currentIndex);
+                                                  prefs.setInt(
+                                                      "index",
+                                                      Manager.getInstance()
+                                                          .currentIndex);
                                                 });
                                               });
                                               Navigator.pop(context);
@@ -272,13 +275,29 @@ class _QuizScreenState extends State<QuizScreen> {
                         width: 100,
                         color: Colors.white,
                         child: Center(
-                          child: Text(
-                            "正确答案：${questions[Manager.getInstance().currentIndex].answer}\n解析：${(questions[Manager.getInstance().currentIndex].analysis ?? "\n\n") == "\n\n" ? "暂无解析" : questions[Manager.getInstance().currentIndex].analysis ?? ""}"
-                                .replaceAll("\n\n", ""),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: welcomeMainBackground,
-                              fontWeight: FontWeight.bold,
+                          child: GestureDetector(
+                            onTap: () async {
+                              var analyis =
+                                  questions[Manager.getInstance().currentIndex]
+                                          .analysis ??
+                                      "";
+                              // 匹配网址
+                              var reg = RegExp(r'https?://\S+');
+                              var match = reg.firstMatch(analyis);
+                              if (match != null) {
+                                var url = match.group(0);
+                                Manager.getInstance().launchUrl(url!);
+                                return;
+                              }
+                            },
+                            child: Text(
+                              "正确答案：${questions[Manager.getInstance().currentIndex].answer}\n解析：${(questions[Manager.getInstance().currentIndex].analysis ?? "\n\n") == "\n\n" ? "暂无解析" : questions[Manager.getInstance().currentIndex].analysis ?? ""}"
+                                  .replaceAll("\n\n", ""),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: welcomeMainBackground,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
